@@ -1,0 +1,150 @@
+{
+  "info": {
+    "name": "springDTO User API - Tests",
+    "description": "Run with the Collection Runner in order. Create saves userId to a collection variable used by the later requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:9090" },
+    { "key": "userId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Create User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('Has id', () => pm.expect(body.id).to.be.a('number'));",
+              "pm.test('firstName saved', () => pm.expect(body.firstName).to.eql('John'));",
+              "pm.test('lastName saved', () => pm.expect(body.lastName).to.eql('Doe'));",
+              "pm.test('emailAddress saved', () => pm.expect(body.emailAddress).to.eql('john.doe@example.com'));",
+              "pm.test('phone saved', () => pm.expect(body.phone).to.eql('9999999999'));",
+              "pm.collectionVariables.set('userId', body.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fName\": \"John\",\n  \"lName\": \"Doe\",\n  \"emailAddress\": \"john.doe@example.com\",\n  \"phone\": \"9999999999\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users"] }
+      }
+    },
+    {
+      "name": "2. Get User By Id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('Same id', () => pm.expect(String(body.id)).to.eql(pm.collectionVariables.get('userId')));",
+              "pm.test('firstName not null', () => pm.expect(body.firstName).to.eql('John'));",
+              "pm.test('lastName not null', () => pm.expect(body.lastName).to.eql('Doe'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "{{userId}}"] }
+      }
+    },
+    {
+      "name": "3. Get All Users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('Is non-empty array', () => { pm.expect(body).to.be.an('array'); pm.expect(body.length).to.be.above(0); });",
+              "pm.test('Contains created user', () => pm.expect(body.some(u => String(u.id) === pm.collectionVariables.get('userId'))).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users"] }
+      }
+    },
+    {
+      "name": "4. Update User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('fName updated', () => pm.expect(body.fName).to.eql('Jane'));",
+              "pm.test('lName updated', () => pm.expect(body.lName).to.eql('Smith'));",
+              "pm.test('emailAddress updated', () => pm.expect(body.emailAddress).to.eql('jane.smith@example.com'));",
+              "pm.test('phone updated', () => pm.expect(body.phone).to.eql('8888888888'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fName\": \"Jane\",\n  \"lName\": \"Smith\",\n  \"emailAddress\": \"jane.smith@example.com\",\n  \"phone\": \"8888888888\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "{{userId}}"] }
+      }
+    },
+    {
+      "name": "5. Delete User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "{{userId}}"] }
+      }
+    },
+    {
+      "name": "6. Get Deleted User (expect error)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User no longer found (4xx/5xx)', () => pm.expect(pm.response.code).to.be.at.least(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "{{userId}}"] }
+      }
+    }
+  ]
+}
